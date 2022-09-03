@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.preprocessing import StandardScaler
 import datetime as dt
 import joblib
@@ -57,6 +58,8 @@ def clustering(data, mat, prod_desc, price_basket):
     
     data['categ_product']=data.loc[:, 'Description'].map(corresp)
 
+    
+
     for i in range(kmeans_prod.n_clusters):
         col=f'categ_{i}'
         df_temp=data[data['categ_product']==i]
@@ -72,6 +75,7 @@ def clustering(data, mat, prod_desc, price_basket):
 
     transactions_per_user=price_basket.groupby(by=['CustomerID'])['BasketPrice'].agg(['count','min','max','mean','sum'])
 
+
     for i in range(5):
         col=f'categ_{i}'
         transactions_per_user[col]=price_basket.groupby(by=['CustomerID'])[col].sum()/transactions_per_user['sum']*100
@@ -82,9 +86,13 @@ def clustering(data, mat, prod_desc, price_basket):
     scaled_matrix=scaler.transform(transactions_per_user.to_numpy())
 
     kmeans_cust=joblib.load('models/kmeans_customers.sav')
-    cust_pred=kmeans_cust.predict(scaled_matrix)
+    cust_pred=kmeans_cust.predict(scaled_matrix)[0]
 
-    return cust_pred[0]
+    cluster_data=pd.read_csv('data/customer_cluster_data.csv')
+    top_cluster=np.argmax(cluster_data[cluster_data['cluster']==cust_pred].loc[:, ['categ_0', 'categ_1', 'categ_2', 'categ_3', 'categ_4']].values)
+    top_products=list(data[data['categ_product']==top_cluster]['Description'].value_counts()[:5].index)
+
+    return cust_pred, top_products
 
 
 def prepare_test_data_for_rfm(data):

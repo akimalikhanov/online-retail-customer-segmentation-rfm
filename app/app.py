@@ -86,12 +86,15 @@ elif bar=='Clustering & RFM':
     if uploaded_file is not None:
         df_test=pd.read_csv(uploaded_file)
         data, matrix, prod_description, price_basket=prepare_test_data_for_clustering(df_test)
-        pred=clustering(data, matrix, prod_description, price_basket)
+        pred, top_products=clustering(data, matrix, prod_description, price_basket)
         st.title('Customer Segmentation')
         st.success(f'The customer is from cluster: {pred}')
         cluster_data=pd.read_csv('data/customer_cluster_data.csv')
         title=f'Product Category Distribution For Cluster {pred}'
         plot_radar(cluster_data, pred, title)
+        st.write('Most Popular Products In Customer\'s Top Category:')
+        for i in top_products:
+            st.markdown("- "+i)
 
         st.title('RFM Analysis')
         rfm_data=prepare_test_data_for_rfm(df_test)
